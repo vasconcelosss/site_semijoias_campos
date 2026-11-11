@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vitrine Semijoias</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* layout: sticky header (busca + categorias) sobre grade de cards; painel da loja abre como gaveta lateral */
+:root{
+  --bg:#EEEBE3; --surface:#FFFFFF; --surface-2:#F6F3EC;
+  --ink:#201F1A; --ink-soft:#656055; --border:#D9D3C4;
+  --accent:#0E5B49; --accent-ink:#FFFFFF; --accent-soft:#E1EDE7;
+  --gold:#96722F; --danger:#A1402B; --danger-soft:#F3E1DC; --success:#2E7D4F;
+  --radius:14px;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15180F; --surface:#1D2117; --surface-2:#232A1C;
+    --ink:#ECE8DC; --ink-soft:#A9A694; --border:#343B2A;
+    --accent:#58CFA6; --accent-ink:#0B1410; --accent-soft:#1E3A30;
+    --gold:#D7B35F; --danger:#E08870; --danger-soft:#3A2420; --success:#6FCB95;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15180F; --surface:#1D2117; --surface-2:#232A1C;
+  --ink:#ECE8DC; --ink-soft:#A9A694; --border:#343B2A;
+  --accent:#58CFA6; --accent-ink:#0B1410; --accent-soft:#1E3A30;
+  --gold:#D7B35F; --danger:#E08870; --danger-soft:#3A2420; --success:#6FCB95;
+  color-scheme: dark;
+}
+*{box-sizing:border-box;}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:'Work Sans',system-ui,sans-serif;
+  padding-left:max(16px, env(safe-area-inset-left,0px));
+  padding-right:max(16px, env(safe-area-inset-right,0px));
+}
+h1,h2,h3,.display{font-family:'Fraunces',Georgia,serif; text-wrap:balance;}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace; font-variant-numeric:tabular-nums;}
+a{color:var(--accent);}
+button{font-family:inherit; cursor:pointer;}
+.wrap{max-width:1100px; margin:0 auto; padding-block:20px 60px;}
+
+/* header */
+header.top{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:20;
+  background:var(--bg); padding-block:14px 10px; border-bottom:1px solid var(--border);
+}
+.title-row{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+.title-row h1{font-size:1.5rem; font-weight:600; margin:0;}
+.title-row .sub{color:var(--ink-soft); font-size:.85rem; margin-top:2px;}
+.staff-btn{
+  background:var(--surface-2); color:var(--ink); border:1px solid var(--border);
+  border-radius:999px; padding:8px 16px; font-size:.85rem; font-weight:600; white-space:nowrap;
+}
+.staff-btn:hover{border-color:var(--accent);}
+.search-row{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;}
+.search-row input{
+  flex:1; min-width:0; background:var(--surface); color:var(--ink); border:1px solid var(--border);
+  border-radius:10px; padding:10px 14px; font-size:.95rem;
+}
+.search-row input:focus{outline:2px solid var(--accent); outline-offset:1px;}
+.chips{display:flex; gap:8px; overflow-x:auto; margin-top:12px; padding-bottom:4px; -webkit-overflow-scrolling:touch;}
+.chip{
+  flex:none; background:var(--surface); border:1px solid var(--border); color:var(--ink-soft);
+  border-radius:999px; padding:7px 14px; font-size:.82rem; font-weight:600; white-space:nowrap;
+}
+.chip.active{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+.chip .n{opacity:.7; font-weight:500;}
+
+/* grid */
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px; margin-top:20px;}
+.card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  overflow:hidden; text-align:left; padding:0; display:flex; flex-direction:column; min-width:0;
+}
+.card img{width:100%; aspect-ratio:1/1; object-fit:cover; display:block; background:var(--surface-2);}
+.card .info{padding:9px 11px 11px; display:flex; flex-direction:column; gap:3px;}
+.card .code{font-size:.72rem; color:var(--ink-soft); letter-spacing:.02em;}
+.card .price{font-size:1.02rem; font-weight:600; color:var(--gold);}
+.empty-state{text-align:center; padding:60px 20px; color:var(--ink-soft);}
+
+/* modal */
+.modal-bg{
+  position:fixed; inset:0; background:rgba(10,12,8,.6); display:flex; align-items:center; justify-content:center;
+  padding:16px; z-index:50;
+}
+.modal{
+  background:var(--surface); border-radius:var(--radius); max-width:420px; width:100%;
+  overflow:hidden; max-height:92vh; overflow-y:auto;
+}
+.modal img{width:100%; display:block; aspect-ratio:1/1; object-fit:cover;}
+.modal .body{padding:18px;}
+.modal .code-row{display:flex; align-items:center; gap:10px; margin-bottom:6px;}
+.modal .code-row .code{font-size:1rem; font-weight:600;}
+.copy-btn{background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:4px 10px; font-size:.75rem; color:var(--ink-soft);}
+.modal .price{font-size:1.5rem; font-weight:600; color:var(--gold); margin:4px 0 2px;}
+.modal .cat{color:var(--ink-soft); font-size:.85rem;}
+.modal .close{display:block; width:100%; margin-top:16px; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:10px; font-weight:600;}
+
+/* drawer */
+.drawer-bg{position:fixed; inset:0; background:rgba(10,12,8,.5); z-index:40; display:none;}
+.drawer-bg.open{display:block;}
+.drawer{
+  position:fixed; top:0; right:0; height:100%; width:min(420px,100%); background:var(--surface);
+  z-index:41; transform:translateX(100%); transition:transform .25s ease; overflow-y:auto;
+  padding:max(18px,env(safe-area-inset-top,0px)) max(18px,env(safe-area-inset-right,0px)) 24px 18px;
+  border-left:1px solid var(--border);
+}
+.drawer.open{transform:translateX(0);}
+.drawer h2{font-size:1.2rem; margin:0 0 4px;}
+.drawer .close-x{position:absolute; top:16px; right:16px; background:none; border:none; font-size:1.3rem; color:var(--ink-soft); line-height:1;}
+.pin-pad{display:flex; flex-direction:column; align-items:center; gap:14px; padding:40px 10px;}
+.pin-pad input{
+  width:140px; text-align:center; font-size:1.4rem; letter-spacing:.3em; padding:10px; border-radius:10px;
+  border:1px solid var(--border); background:var(--surface-2); color:var(--ink);
+}
+.pin-pad button{background:var(--accent); color:var(--accent-ink); border:none; border-radius:10px; padding:10px 24px; font-weight:600;}
+.pin-err{color:var(--danger); font-size:.85rem; min-height:1.2em;}
+.status-box{background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:14px; font-size:.88rem; color:var(--ink-soft); margin:20px 0;}
+.kpis{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:16px 0;}
+.kpi{background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:12px;}
+.kpi .label{font-size:.72rem; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em;}
+.kpi .val{font-size:1.15rem; font-weight:600; margin-top:2px;}
+.stock-row{display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--border);}
+.stock-row img{width:42px; height:42px; border-radius:8px; object-fit:cover; flex:none;}
+.stock-row .meta{flex:1; min-width:0;}
+.stock-row .meta .code{font-size:.78rem; display:block;}
+.stock-row .meta .qty{font-size:.72rem; color:var(--ink-soft);}
+.stock-row .qty.zero{color:var(--danger);}
+.sell-btn{background:var(--accent-soft); color:var(--accent); border:none; border-radius:8px; padding:7px 12px; font-size:.78rem; font-weight:700; flex:none;}
+.sell-btn:disabled{opacity:.4; cursor:default;}
+.pend-row{display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--border);}
+.pend-row input{width:64px; padding:6px 8px; border-radius:7px; border:1px solid var(--border); background:var(--surface-2); color:var(--ink);}
+.pend-row button{background:var(--gold); color:#fff; border:none; border-radius:7px; padding:6px 10px; font-size:.76rem; font-weight:600;}
+.sale-item{font-size:.8rem; padding:7px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; color:var(--ink-soft);}
+.section-label{font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); margin:22px 0 8px;}
+[hidden]{display:none!important;}
+.staff-link-btn{display:block; text-align:center; background:var(--accent); color:var(--accent-ink);
+  border:none; border-radius:10px; padding:13px 18px; font-weight:600; text-decoration:none; margin-bottom:10px;}
+.staff-link-btn.secondary{background:var(--surface-2); color:var(--ink); border:1px solid var(--border);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="title-row">
+      <div>
+        <h1>Vitrine Semijoias</h1>
+        <div class="sub" id="countLabel">carregando peças…</div>
+      </div>
+      <button class="staff-btn" id="openStaff">Área da loja</button>
+    </div>
+    <div class="search-row">
+      <input type="text" id="searchInput" placeholder="Buscar pelo código (ex: CL0001...)" autocomplete="off">
+    </div>
+    <div class="chips" id="chips"></div>
+  </header>
+
+  <div class="grid" id="grid"></div>
+  <div class="empty-state" id="emptyState" hidden>Nenhuma peça encontrada com esse código ou categoria.</div>
+</div>
+
+<div class="modal-bg" id="modalBg" hidden>
+  <div class="modal">
+    <img id="modalImg" alt="">
+    <div class="body">
+      <div class="code-row">
+        <span class="code mono" id="modalCode"></span>
+        <button class="copy-btn" id="modalCopy">copiar código</button>
+      </div>
+      <div class="cat" id="modalCat"></div>
+      <div class="price mono" id="modalPrice"></div>
+      <button class="close" id="modalClose">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div class="drawer-bg" id="drawerBg"></div>
+<aside class="drawer" id="drawer">
+  <button class="close-x" id="closeDrawer">✕</button>
+  <div id="drawerContent"></div>
+</aside>
+<script>
+
+const CATALOG = [{"codigo": "AN000114990", "categoria": "Anéis", "preco": 149.9, "quantidade": 1, "foto": "fotos/AN/AN000114990.jpg", "obs": "2 pecas fisicas na mesma foto de origem (anel distinto, codigo proprio)"}, {"codigo": "AN000214990", "categoria": "Anéis", "preco": 149.9, "quantidade": 1, "foto": "fotos/AN/AN000214990.jpg", "obs": "2 pecas fisicas na mesma foto de origem (anel distinto, codigo proprio)"}, {"codigo": "BR00015990", "categoria": "Brincos", "preco": 59.9, "quantidade": 1, "foto": "fotos/BR/BR00015990.jpg", "obs": ""}, {"codigo": "BR00025990", "categoria": "Brincos", "preco": 59.9, "quantidade": 1, "foto": "fotos/BR/BR00025990.jpg", "obs": ""}, {"codigo": "BR00035990", "categoria": "Brincos", "preco": 59.9, "quantidade": 1, "foto": "fotos/BR/BR00035990.jpg", "obs": ""}, {"codigo": "BR00045990", "categoria": "Brincos", "preco": 59.9, "quantidade": 1, "foto": "fotos/BR/BR00045990.jpg", "obs": ""}, {"codigo": "BR00055990", "categoria": "Brincos", "preco": 59.9, "quantidade": 1, "foto": "fotos/BR/BR00055990.jpg", "obs": ""}, {"codigo": "BR00065990", "categoria": "Brincos", "preco": 59.9, "quantidade": 1, "foto": "fotos/BR/BR00065990.jpg", "obs": ""}, {"codigo": "BR00075990", "categoria": "Brincos", "preco": 59.9, "quantidade": 1, "foto": "fotos/BR/BR00075990.jpg", "obs": ""}, {"codigo": "BR00085990", "categoria": "Brincos", "preco": 59.9, "quantidade": 1, "foto": "fotos/BR/BR00085990.jpg", "obs": ""}, {"codigo": "BR00095990", "categoria": "Brincos", "preco": 59.9, "quantidade": 1, "foto": "fotos/BR/BR00095990.jpg", "obs": ""}, {"codigo": "BR00108990", "categoria": "Brincos", "preco": 89.9, "quantidade": 1, "foto": "fotos/BR/BR00108990.jpg", "obs": ""}, {"codigo": "BR00118990", "categoria": "Brincos", "preco": 89.9, "quantidade": 1, "foto": "fotos/BR/BR00118990.jpg", "obs": ""}, {"codigo": "BR00128990", "categoria": "Brincos", "preco": 89.9, "quantidade": 1, "foto": "fotos/BR/BR00128990.jpg", "obs": ""}, {"codigo": "BR00138990", "categoria": "Brincos", "preco": 89.9, "quantidade": 1, "foto": "fotos/BR/BR00138990.jpg", "obs": ""}, {"codigo": "BR00148990", "categoria": "Brincos", "preco": 89.9, "quantidade": 1, "foto": "fotos/BR/BR00148990.jpg", "obs": ""}, {"codigo": "BR00158990", "categoria": "Brincos", "preco": 89.9, "quantidade": 1, "foto": "fotos/BR/BR00158990.jpg", "obs": ""}, {"codigo": "BR00168990", "categoria": "Brincos", "preco": 89.9, "quantidade": 1, "foto": "fotos/BR/BR00168990.jpg", "obs": ""}, {"codigo": "BR00179990", "categoria": "Brincos", "preco": 99.9, "quantidade": 1, "foto": "fotos/BR/BR00179990.jpg", "obs": ""}, {"codigo": "BR00189990", "categoria": "Brincos", "preco": 99.9, "quantidade": 1, "foto": "fotos/BR/BR00189990.jpg", "obs": ""}, {"codigo": "BR00199990", "categoria": "Brincos", "preco": 99.9, "quantidade": 1, "foto": "fotos/BR/BR00199990.jpg", "obs": ""}, {"codigo": "BR00209990", "categoria": "Brincos", "preco": 99.9, "quantidade": 1, "foto": "fotos/BR/BR00209990.jpg", "obs": ""}, {"codigo": "BR00219990", "categoria": "Brincos", "preco": 99.9, "quantidade": 1, "foto": "fotos/BR/BR00219990.jpg", "obs": ""}, {"codigo": "BR00229990", "categoria": "Brincos", "preco": 99.9, "quantidade": 1, "foto": "fotos/BR/BR00229990.jpg", "obs": ""}, {"codigo": "BR002311990", "categoria": "Brincos", "preco": 119.9, "quantidade": 1, "foto": "fotos/BR/BR002311990.jpg", "obs": ""}, {"codigo": "BR002411990", "categoria": "Brincos", "preco": 119.9, "quantidade": 1, "foto": "fotos/BR/BR002411990.jpg", "obs": ""}, {"codigo": "BR002511990", "categoria": "Brincos", "preco": 119.9, "quantidade": 1, "foto": "fotos/BR/BR002511990.jpg", "obs": ""}, {"codigo": "BR002611990", "categoria": "Brincos", "preco": 119.9, "quantidade": 1, "foto": "fotos/BR/BR002611990.jpg", "obs": ""}, {"codigo": "BR002711990", "categoria": "Brincos", "preco": 119.9, "quantidade": 1, "foto": "fotos/BR/BR002711990.jpg", "obs": ""}, {"codigo": "BR002811990", "categoria": "Brincos", "preco": 119.9, "quantidade": 1, "foto": "fotos/BR/BR002811990.jpg", "obs": ""}, {"codigo": "BR002911990", "categoria": "Brincos", "preco": 119.9, "quantidade": 1, "foto": "fotos/BR/BR002911990.jpg", "obs": ""}, {"codigo": "BR003011990", "categoria": "Brincos", "preco": 119.9, "quantidade": 1, "foto": "fotos/BR/BR003011990.jpg", "obs": ""}, {"codigo": "BR003114990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR003114990.jpg", "obs": ""}, {"codigo": "BR003214990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR003214990.jpg", "obs": ""}, {"codigo": "BR003314990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR003314990.jpg", "obs": ""}, {"codigo": "BR003414990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR003414990.jpg", "obs": ""}, {"codigo": "BR003514990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR003514990.jpg", "obs": ""}, {"codigo": "BR003614990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR003614990.jpg", "obs": ""}, {"codigo": "BR003714990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR003714990.jpg", "obs": ""}, {"codigo": "BR003814990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR003814990.jpg", "obs": ""}, {"codigo": "BR003914990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR003914990.jpg", "obs": ""}, {"codigo": "BR004014990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR004014990.jpg", "obs": ""}, {"codigo": "BR004114990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR004114990.jpg", "obs": ""}, {"codigo": "BR004214990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR004214990.jpg", "obs": ""}, {"codigo": "BR004314990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR004314990.jpg", "obs": ""}, {"codigo": "BR004414990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR004414990.jpg", "obs": ""}, {"codigo": "BR004514990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR004514990.jpg", "obs": ""}, {"codigo": "BR004614990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR004614990.jpg", "obs": ""}, {"codigo": "BR004714990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR004714990.jpg", "obs": ""}, {"codigo": "BR004814990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR004814990.jpg", "obs": ""}, {"codigo": "BR004914990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR004914990.jpg", "obs": ""}, {"codigo": "BR005014990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR005014990.jpg", "obs": ""}, {"codigo": "BR005114990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR005114990.jpg", "obs": ""}, {"codigo": "BR005214990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR005214990.jpg", "obs": ""}, {"codigo": "BR005314990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR005314990.jpg", "obs": ""}, {"codigo": "BR005414990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR005414990.jpg", "obs": ""}, {"codigo": "BR005514990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR005514990.jpg", "obs": ""}, {"codigo": "BR005614990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR005614990.jpg", "obs": ""}, {"codigo": "BR005714990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR005714990.jpg", "obs": ""}, {"codigo": "BR005814990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR005814990.jpg", "obs": ""}, {"codigo": "BR005914990", "categoria": "Brincos", "preco": 149.9, "quantidade": 1, "foto": "fotos/BR/BR005914990.jpg", "obs": ""}, {"codigo": "BR006019990", "categoria": "Brincos", "preco": 199.9, "quantidade": 1, "foto": "fotos/BR/BR006019990.jpg", "obs": ""}, {"codigo": "BR006119990", "categoria": "Brincos", "preco": 199.9, "quantidade": 1, "foto": "fotos/BR/BR006119990.jpg", "obs": ""}, {"codigo": "BR006219990", "categoria": "Brincos", "preco": 199.9, "quantidade": 1, "foto": "fotos/BR/BR006219990.jpg", "obs": ""}, {"codigo": "CH00015990", "categoria": "Choker", "preco": 59.9, "quantidade": 1, "foto": "fotos/CH/CH00015990.jpg", "obs": ""}, {"codigo": "CH00025990", "categoria": "Choker", "preco": 59.9, "quantidade": 1, "foto": "fotos/CH/CH00025990.jpg", "obs": ""}, {"codigo": "CH00035990", "categoria": "Choker", "preco": 59.9, "quantidade": 1, "foto": "fotos/CH/CH00035990.jpg", "obs": ""}, {"codigo": "CH00045990", "categoria": "Choker", "preco": 59.9, "quantidade": 1, "foto": "fotos/CH/CH00045990.jpg", "obs": ""}, {"codigo": "CH00058990", "categoria": "Choker", "preco": 89.9, "quantidade": 1, "foto": "fotos/CH/CH00058990.jpg", "obs": ""}, {"codigo": "CH00068990", "categoria": "Choker", "preco": 89.9, "quantidade": 1, "foto": "fotos/CH/CH00068990.jpg", "obs": ""}, {"codigo": "CH00078990", "categoria": "Choker", "preco": 89.9, "quantidade": 1, "foto": "fotos/CH/CH00078990.jpg", "obs": ""}, {"codigo": "CH00089990", "categoria": "Choker", "preco": 99.9, "quantidade": 1, "foto": "fotos/CH/CH00089990.jpg", "obs": ""}, {"codigo": "CH00099990", "categoria": "Choker", "preco": 99.9, "quantidade": 1, "foto": "fotos/CH/CH00099990.jpg", "obs": ""}, {"codigo": "CH00109990", "categoria": "Choker", "preco": 99.9, "quantidade": 1, "foto": "fotos/CH/CH00109990.jpg", "obs": ""}, {"codigo": "CH00119990", "categoria": "Choker", "preco": 99.9, "quantidade": 1, "foto": "fotos/CH/CH00119990.jpg", "obs": ""}, {"codigo": "CH00129990", "categoria": "Choker", "preco": 99.9, "quantidade": 1, "foto": "fotos/CH/CH00129990.jpg", "obs": ""}, {"codigo": "CH00139990", "categoria": "Choker", "preco": 99.9, "quantidade": 1, "foto": "fotos/CH/CH00139990.jpg", "obs": ""}, {"codigo": "CH001411990", "categoria": "Choker", "preco": 119.9, "quantidade": 1, "foto": "fotos/CH/CH001411990.jpg", "obs": ""}, {"codigo": "CH001511990", "categoria": "Choker", "preco": 119.9, "quantidade": 1, "foto": "fotos/CH/CH001511990.jpg", "obs": ""}, {"codigo": "CH001611990", "categoria": "Choker", "preco": 119.9, "quantidade": 1, "foto": "fotos/CH/CH001611990.jpg", "obs": ""}, {"codigo": "CH001719990", "categoria": "Choker", "preco": 199.9, "quantidade": 1, "foto": "fotos/CH/CH001719990.jpg", "obs": ""}, {"codigo": "CH001819990", "categoria": "Choker", "preco": 199.9, "quantidade": 1, "foto": "fotos/CH/CH001819990.jpg", "obs": ""}, {"codigo": "CJ00015990", "categoria": "Conjuntos", "preco": 59.9, "quantidade": 1, "foto": "fotos/CJ/CJ00015990.jpg", "obs": ""}, {"codigo": "CJ00025990", "categoria": "Conjuntos", "preco": 59.9, "quantidade": 1, "foto": "fotos/CJ/CJ00025990.jpg", "obs": ""}, {"codigo": "CJ00038990", "categoria": "Conjuntos", "preco": 89.9, "quantidade": 1, "foto": "fotos/CJ/CJ00038990.jpg", "obs": ""}, {"codigo": "CJ00048990", "categoria": "Conjuntos", "preco": 89.9, "quantidade": 1, "foto": "fotos/CJ/CJ00048990.jpg", "obs": ""}, {"codigo": "CJ00059990", "categoria": "Conjuntos", "preco": 99.9, "quantidade": 1, "foto": "fotos/CJ/CJ00059990.jpg", "obs": ""}, {"codigo": "CJ00069990", "categoria": "Conjuntos", "preco": 99.9, "quantidade": 1, "foto": "fotos/CJ/CJ00069990.jpg", "obs": ""}, {"codigo": "CJ00079990", "categoria": "Conjuntos", "preco": 99.9, "quantidade": 1, "foto": "fotos/CJ/CJ00079990.jpg", "obs": ""}, {"codigo": "CJ000811990", "categoria": "Conjuntos", "preco": 119.9, "quantidade": 1, "foto": "fotos/CJ/CJ000811990.jpg", "obs": ""}, {"codigo": "CJ000911990", "categoria": "Conjuntos", "preco": 119.9, "quantidade": 1, "foto": "fotos/CJ/CJ000911990.jpg", "obs": ""}, {"codigo": "CJ001011990", "categoria": "Conjuntos", "preco": 119.9, "quantidade": 1, "foto": "fotos/CJ/CJ001011990.jpg", "obs": ""}, {"codigo": "CJ001111990", "categoria": "Conjuntos", "preco": 119.9, "quantidade": 1, "foto": "fotos/CJ/CJ001111990.jpg", "obs": ""}, {"codigo": "CJ001211990", "categoria": "Conjuntos", "preco": 119.9, "quantidade": 1, "foto": "fotos/CJ/CJ001211990.jpg", "obs": ""}, {"codigo": "CJ001311990", "categoria": "Conjuntos", "preco": 119.9, "quantidade": 1, "foto": "fotos/CJ/CJ001311990.jpg", "obs": ""}, {"codigo": "CJ001411990", "categoria": "Conjuntos", "preco": 119.9, "quantidade": 1, "foto": "fotos/CJ/CJ001411990.jpg", "obs": ""}, {"codigo": "CJ001511990", "categoria": "Conjuntos", "preco": 119.9, "quantidade": 1, "foto": "fotos/CJ/CJ001511990.jpg", "obs": ""}, {"codigo": "CJ001611990", "categoria": "Conjuntos", "preco": 119.9, "quantidade": 1, "foto": "fotos/CJ/CJ001611990.jpg", "obs": ""}, {"codigo": "CJ001711990", "categoria": "Conjuntos", "preco": 119.9, "quantidade": 1, "foto": "fotos/CJ/CJ001711990.jpg", "obs": ""}, {"codigo": "CJ001811990", "categoria": "Conjuntos", "preco": 119.9, "quantidade": 1, "foto": "fotos/CJ/CJ001811990.jpg", "obs": ""}, {"codigo": "CJ001919990", "categoria": "Conjuntos", "preco": 199.9, "quantidade": 1, "foto": "fotos/CJ/CJ001919990.jpg", "obs": ""}, {"codigo": "CJ002019990", "categoria": "Conjuntos", "preco": 199.9, "quantidade": 1, "foto": "fotos/CJ/CJ002019990.jpg", "obs": ""}, {"codigo": "CJ002119990", "categoria": "Conjuntos", "preco": 199.9, "quantidade": 1, "foto": "fotos/CJ/CJ002119990.jpg", "obs": ""}, {"codigo": "CJ002219990", "categoria": "Conjuntos", "preco": 199.9, "quantidade": 1, "foto": "fotos/CJ/CJ002219990.jpg", "obs": ""}, {"codigo": "CJ002319990", "categoria": "Conjuntos", "preco": 199.9, "quantidade": 1, "foto": "fotos/CJ/CJ002319990.jpg", "obs": ""}, {"codigo": "CJ002419990", "categoria": "Conjuntos", "preco": 199.9, "quantidade": 1, "foto": "fotos/CJ/CJ002419990.jpg", "obs": ""}, {"codigo": "CJ002519990", "categoria": "Conjuntos", "preco": 199.9, "quantidade": 1, "foto": "fotos/CJ/CJ002519990.jpg", "obs": ""}, {"codigo": "CJ002619990", "categoria": "Conjuntos", "preco": 199.9, "quantidade": 1, "foto": "fotos/CJ/CJ002619990.jpg", "obs": ""}, {"codigo": "CJ002719990", "categoria": "Conjuntos", "preco": 199.9, "quantidade": 1, "foto": "fotos/CJ/CJ002719990.jpg", "obs": ""}, {"codigo": "CJ002819990", "categoria": "Conjuntos", "preco": 199.9, "quantidade": 1, "foto": "fotos/CJ/CJ002819990.jpg", "obs": ""}, {"codigo": "CJ002919990", "categoria": "Conjuntos", "preco": 199.9, "quantidade": 1, "foto": "fotos/CJ/CJ002919990.jpg", "obs": ""}, {"codigo": "CJ003019990", "categoria": "Conjuntos", "preco": 199.9, "quantidade": 1, "foto": "fotos/CJ/CJ003019990.jpg", "obs": ""}, {"codigo": "CJ003119990", "categoria": "Conjuntos", "preco": 199.9, "quantidade": 1, "foto": "fotos/CJ/CJ003119990.jpg", "obs": ""}, {"codigo": "CJ003219990", "categoria": "Conjuntos", "preco": 199.9, "quantidade": 1, "foto": "fotos/CJ/CJ003219990.jpg", "obs": ""}, {"codigo": "CL00018990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00018990.jpg", "obs": ""}, {"codigo": "CL00028990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00028990.jpg", "obs": ""}, {"codigo": "CL00038990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00038990.jpg", "obs": ""}, {"codigo": "CL00048990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00048990.jpg", "obs": ""}, {"codigo": "CL00058990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00058990.jpg", "obs": ""}, {"codigo": "CL00068990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00068990.jpg", "obs": ""}, {"codigo": "CL00078990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00078990.jpg", "obs": ""}, {"codigo": "CL00088990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00088990.jpg", "obs": ""}, {"codigo": "CL00098990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00098990.jpg", "obs": ""}, {"codigo": "CL00108990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00108990.jpg", "obs": ""}, {"codigo": "CL00118990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00118990.jpg", "obs": ""}, {"codigo": "CL00128990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00128990.jpg", "obs": ""}, {"codigo": "CL00138990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00138990.jpg", "obs": ""}, {"codigo": "CL00148990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00148990.jpg", "obs": ""}, {"codigo": "CL00158990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00158990.jpg", "obs": ""}, {"codigo": "CL00168990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00168990.jpg", "obs": ""}, {"codigo": "CL00178990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00178990.jpg", "obs": ""}, {"codigo": "CL00188990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00188990.jpg", "obs": ""}, {"codigo": "CL00198990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00198990.jpg", "obs": ""}, {"codigo": "CL00208990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00208990.jpg", "obs": ""}, {"codigo": "CL00218990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00218990.jpg", "obs": ""}, {"codigo": "CL00228990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00228990.jpg", "obs": ""}, {"codigo": "CL00238990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00238990.jpg", "obs": ""}, {"codigo": "CL00248990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00248990.jpg", "obs": ""}, {"codigo": "CL00258990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00258990.jpg", "obs": ""}, {"codigo": "CL00268990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00268990.jpg", "obs": ""}, {"codigo": "CL00278990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00278990.jpg", "obs": ""}, {"codigo": "CL00288990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00288990.jpg", "obs": ""}, {"codigo": "CL00298990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00298990.jpg", "obs": ""}, {"codigo": "CL00308990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00308990.jpg", "obs": ""}, {"codigo": "CL00318990", "categoria": "Colares", "preco": 89.9, "quantidade": 1, "foto": "fotos/CL/CL00318990.jpg", "obs": ""}, {"codigo": "CL00329990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00329990.jpg", "obs": ""}, {"codigo": "CL00339990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00339990.jpg", "obs": ""}, {"codigo": "CL00349990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00349990.jpg", "obs": ""}, {"codigo": "CL00359990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00359990.jpg", "obs": ""}, {"codigo": "CL00369990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00369990.jpg", "obs": ""}, {"codigo": "CL00379990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00379990.jpg", "obs": ""}, {"codigo": "CL00389990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00389990.jpg", "obs": ""}, {"codigo": "CL00399990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00399990.jpg", "obs": ""}, {"codigo": "CL00409990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00409990.jpg", "obs": ""}, {"codigo": "CL00419990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00419990.jpg", "obs": ""}, {"codigo": "CL00429990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00429990.jpg", "obs": ""}, {"codigo": "CL00439990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00439990.jpg", "obs": ""}, {"codigo": "CL00449990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00449990.jpg", "obs": ""}, {"codigo": "CL00459990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00459990.jpg", "obs": ""}, {"codigo": "CL00469990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00469990.jpg", "obs": ""}, {"codigo": "CL00479990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00479990.jpg", "obs": ""}, {"codigo": "CL00489990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00489990.jpg", "obs": ""}, {"codigo": "CL00499990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00499990.jpg", "obs": ""}, {"codigo": "CL00509990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00509990.jpg", "obs": ""}, {"codigo": "CL00519990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00519990.jpg", "obs": ""}, {"codigo": "CL00529990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00529990.jpg", "obs": ""}, {"codigo": "CL00539990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00539990.jpg", "obs": ""}, {"codigo": "CL00549990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00549990.jpg", "obs": ""}, {"codigo": "CL00559990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00559990.jpg", "obs": ""}, {"codigo": "CL00569990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00569990.jpg", "obs": ""}, {"codigo": "CL00579990", "categoria": "Colares", "preco": 99.9, "quantidade": 1, "foto": "fotos/CL/CL00579990.jpg", "obs": ""}, {"codigo": "CL005811990", "categoria": "Colares", "preco": 119.9, "quantidade": 1, "foto": "fotos/CL/CL005811990.jpg", "obs": ""}, {"codigo": "CL005911990", "categoria": "Colares", "preco": 119.9, "quantidade": 1, "foto": "fotos/CL/CL005911990.jpg", "obs": ""}, {"codigo": "CL006011990", "categoria": "Colares", "preco": 119.9, "quantidade": 1, "foto": "fotos/CL/CL006011990.jpg", "obs": ""}, {"codigo": "CL006111990", "categoria": "Colares", "preco": 119.9, "quantidade": 1, "foto": "fotos/CL/CL006111990.jpg", "obs": ""}, {"codigo": "CL006211990", "categoria": "Colares", "preco": 119.9, "quantidade": 1, "foto": "fotos/CL/CL006211990.jpg", "obs": ""}, {"codigo": "CL006311990", "categoria": "Colares", "preco": 119.9, "quantidade": 1, "foto": "fotos/CL/CL006311990.jpg", "obs": ""}, {"codigo": "CL006411990", "categoria": "Colares", "preco": 119.9, "quantidade": 1, "foto": "fotos/CL/CL006411990.jpg", "obs": ""}, {"codigo": "CL006511990", "categoria": "Colares", "preco": 119.9, "quantidade": 1, "foto": "fotos/CL/CL006511990.jpg", "obs": ""}, {"codigo": "CL006614990", "categoria": "Colares", "preco": 149.9, "quantidade": 1, "foto": "fotos/CL/CL006614990.jpg", "obs": ""}, {"codigo": "CL006714990", "categoria": "Colares", "preco": 149.9, "quantidade": 1, "foto": "fotos/CL/CL006714990.jpg", "obs": ""}, {"codigo": "CL006814990", "categoria": "Colares", "preco": 149.9, "quantidade": 1, "foto": "fotos/CL/CL006814990.jpg", "obs": ""}, {"codigo": "CL006914990", "categoria": "Colares", "preco": 149.9, "quantidade": 1, "foto": "fotos/CL/CL006914990.jpg", "obs": ""}, {"codigo": "CL007014990", "categoria": "Colares", "preco": 149.9, "quantidade": 1, "foto": "fotos/CL/CL007014990.jpg", "obs": ""}, {"codigo": "CL007114990", "categoria": "Colares", "preco": 149.9, "quantidade": 1, "foto": "fotos/CL/CL007114990.jpg", "obs": ""}, {"codigo": "CL007214990", "categoria": "Colares", "preco": 149.9, "quantidade": 1, "foto": "fotos/CL/CL007214990.jpg", "obs": ""}, {"codigo": "CL007314990", "categoria": "Colares", "preco": 149.9, "quantidade": 1, "foto": "fotos/CL/CL007314990.jpg", "obs": ""}, {"codigo": "CL007414990", "categoria": "Colares", "preco": 149.9, "quantidade": 1, "foto": "fotos/CL/CL007414990.jpg", "obs": ""}, {"codigo": "LT00015990", "categoria": "Letras", "preco": 59.9, "quantidade": null, "foto": "fotos/LT/LT00015990.jpg", "obs": "Modelo: Letra torta. Quantidade por modelo pendente de contagem (letras)"}, {"codigo": "LT00028990", "categoria": "Letras", "preco": 89.9, "quantidade": null, "foto": "fotos/LT/LT00028990.jpg", "obs": "Modelo: Letras medalha. Quantidade por modelo pendente de contagem (letras)"}, {"codigo": "LT000311990", "categoria": "Letras", "preco": 119.9, "quantidade": null, "foto": "fotos/LT/LT000311990.jpg", "obs": "Modelo: Letra cravejada. Quantidade por modelo pendente de contagem (letras)"}, {"codigo": "LT000414990", "categoria": "Letras", "preco": 149.9, "quantidade": null, "foto": "fotos/LT/LT000414990.jpg", "obs": "Modelo: Letra luxo. Quantidade por modelo pendente de contagem (letras)"}, {"codigo": "PL00014990", "categoria": "Pulseiras", "preco": 49.9, "quantidade": 1, "foto": "fotos/PL/PL00014990.jpg", "obs": ""}, {"codigo": "PL00024990", "categoria": "Pulseiras", "preco": 49.9, "quantidade": 1, "foto": "fotos/PL/PL00024990.jpg", "obs": ""}, {"codigo": "PL00034990", "categoria": "Pulseiras", "preco": 49.9, "quantidade": 1, "foto": "fotos/PL/PL00034990.jpg", "obs": ""}, {"codigo": "PL00044990", "categoria": "Pulseiras", "preco": 49.9, "quantidade": 1, "foto": "fotos/PL/PL00044990.jpg", "obs": ""}, {"codigo": "PL00054990", "categoria": "Pulseiras", "preco": 49.9, "quantidade": 1, "foto": "fotos/PL/PL00054990.jpg", "obs": ""}, {"codigo": "PL00065990", "categoria": "Pulseiras", "preco": 59.9, "quantidade": 1, "foto": "fotos/PL/PL00065990.jpg", "obs": ""}, {"codigo": "PL00075990", "categoria": "Pulseiras", "preco": 59.9, "quantidade": 1, "foto": "fotos/PL/PL00075990.jpg", "obs": ""}, {"codigo": "PL00085990", "categoria": "Pulseiras", "preco": 59.9, "quantidade": 1, "foto": "fotos/PL/PL00085990.jpg", "obs": ""}, {"codigo": "PL00095990", "categoria": "Pulseiras", "preco": 59.9, "quantidade": 1, "foto": "fotos/PL/PL00095990.jpg", "obs": ""}, {"codigo": "PL00105990", "categoria": "Pulseiras", "preco": 59.9, "quantidade": 1, "foto": "fotos/PL/PL00105990.jpg", "obs": ""}, {"codigo": "PL00115990", "categoria": "Pulseiras", "preco": 59.9, "quantidade": 1, "foto": "fotos/PL/PL00115990.jpg", "obs": ""}, {"codigo": "PL00125990", "categoria": "Pulseiras", "preco": 59.9, "quantidade": 1, "foto": "fotos/PL/PL00125990.jpg", "obs": ""}, {"codigo": "PL00135990", "categoria": "Pulseiras", "preco": 59.9, "quantidade": 1, "foto": "fotos/PL/PL00135990.jpg", "obs": ""}, {"codigo": "PL00145990", "categoria": "Pulseiras", "preco": 59.9, "quantidade": 1, "foto": "fotos/PL/PL00145990.jpg", "obs": ""}, {"codigo": "PL00155990", "categoria": "Pulseiras", "preco": 59.9, "quantidade": 1, "foto": "fotos/PL/PL00155990.jpg", "obs": ""}, {"codigo": "PL00165990", "categoria": "Pulseiras", "preco": 59.9, "quantidade": 1, "foto": "fotos/PL/PL00165990.jpg", "obs": ""}, {"codigo": "PL00175990", "categoria": "Pulseiras", "preco": 59.9, "quantidade": 1, "foto": "fotos/PL/PL00175990.jpg", "obs": ""}, {"codigo": "PL00185990", "categoria": "Pulseiras", "preco": 59.9, "quantidade": 1, "foto": "fotos/PL/PL00185990.jpg", "obs": ""}, {"codigo": "PL00195990", "categoria": "Pulseiras", "preco": 59.9, "quantidade": 1, "foto": "fotos/PL/PL00195990.jpg", "obs": ""}, {"codigo": "PL00205990", "categoria": "Pulseiras", "preco": 59.9, "quantidade": 1, "foto": "fotos/PL/PL00205990.jpg", "obs": ""}, {"codigo": "PL00215990", "categoria": "Pulseiras", "preco": 59.9, "quantidade": 1, "foto": "fotos/PL/PL00215990.jpg", "obs": ""}, {"codigo": "PL00225990", "categoria": "Pulseiras", "preco": 59.9, "quantidade": 1, "foto": "fotos/PL/PL00225990.jpg", "obs": ""}, {"codigo": "PL00235990", "categoria": "Pulseiras", "preco": 59.9, "quantidade": 1, "foto": "fotos/PL/PL00235990.jpg", "obs": ""}, {"codigo": "PL00245990", "categoria": "Pulseiras", "preco": 59.9, "quantidade": 1, "foto": "fotos/PL/PL00245990.jpg", "obs": ""}, {"codigo": "PL00258990", "categoria": "Pulseiras", "preco": 89.9, "quantidade": 1, "foto": "fotos/PL/PL00258990.jpg", "obs": ""}, {"codigo": "PL00268990", "categoria": "Pulseiras", "preco": 89.9, "quantidade": 1, "foto": "fotos/PL/PL00268990.jpg", "obs": ""}, {"codigo": "PL00278990", "categoria": "Pulseiras", "preco": 89.9, "quantidade": 1, "foto": "fotos/PL/PL00278990.jpg", "obs": ""}, {"codigo": "PL00288990", "categoria": "Pulseiras", "preco": 89.9, "quantidade": 1, "foto": "fotos/PL/PL00288990.jpg", "obs": ""}, {"codigo": "PL00298990", "categoria": "Pulseiras", "preco": 89.9, "quantidade": 1, "foto": "fotos/PL/PL00298990.jpg", "obs": ""}, {"codigo": "PL00308990", "categoria": "Pulseiras", "preco": 89.9, "quantidade": 1, "foto": "fotos/PL/PL00308990.jpg", "obs": ""}, {"codigo": "PL00318990", "categoria": "Pulseiras", "preco": 89.9, "quantidade": 1, "foto": "fotos/PL/PL00318990.jpg", "obs": ""}, {"codigo": "PL00328990", "categoria": "Pulseiras", "preco": 89.9, "quantidade": 1, "foto": "fotos/PL/PL00328990.jpg", "obs": ""}, {"codigo": "PL00338990", "categoria": "Pulseiras", "preco": 89.9, "quantidade": 1, "foto": "fotos/PL/PL00338990.jpg", "obs": ""}, {"codigo": "PL00348990", "categoria": "Pulseiras", "preco": 89.9, "quantidade": 1, "foto": "fotos/PL/PL00348990.jpg", "obs": ""}, {"codigo": "PL00359990", "categoria": "Pulseiras", "preco": 99.9, "quantidade": 1, "foto": "fotos/PL/PL00359990.jpg", "obs": ""}, {"codigo": "PL00369990", "categoria": "Pulseiras", "preco": 99.9, "quantidade": 1, "foto": "fotos/PL/PL00369990.jpg", "obs": ""}, {"codigo": "PL00379990", "categoria": "Pulseiras", "preco": 99.9, "quantidade": 1, "foto": "fotos/PL/PL00379990.jpg", "obs": ""}, {"codigo": "PL00389990", "categoria": "Pulseiras", "preco": 99.9, "quantidade": 1, "foto": "fotos/PL/PL00389990.jpg", "obs": ""}, {"codigo": "PL00399990", "categoria": "Pulseiras", "preco": 99.9, "quantidade": 1, "foto": "fotos/PL/PL00399990.jpg", "obs": ""}, {"codigo": "PL00409990", "categoria": "Pulseiras", "preco": 99.9, "quantidade": 1, "foto": "fotos/PL/PL00409990.jpg", "obs": ""}, {"codigo": "PL004111990", "categoria": "Pulseiras", "preco": 119.9, "quantidade": 1, "foto": "fotos/PL/PL004111990.jpg", "obs": ""}, {"codigo": "PL004211990", "categoria": "Pulseiras", "preco": 119.9, "quantidade": 1, "foto": "fotos/PL/PL004211990.jpg", "obs": ""}, {"codigo": "PL004311990", "categoria": "Pulseiras", "preco": 119.9, "quantidade": 1, "foto": "fotos/PL/PL004311990.jpg", "obs": ""}, {"codigo": "PL004411990", "categoria": "Pulseiras", "preco": 119.9, "quantidade": 1, "foto": "fotos/PL/PL004411990.jpg", "obs": ""}, {"codigo": "PL004511990", "categoria": "Pulseiras", "preco": 119.9, "quantidade": 1, "foto": "fotos/PL/PL004511990.jpg", "obs": ""}, {"codigo": "PL004611990", "categoria": "Pulseiras", "preco": 119.9, "quantidade": 1, "foto": "fotos/PL/PL004611990.jpg", "obs": ""}, {"codigo": "PL004714990", "categoria": "Pulseiras", "preco": 149.9, "quantidade": 1, "foto": "fotos/PL/PL004714990.jpg", "obs": ""}, {"codigo": "PL004814990", "categoria": "Pulseiras", "preco": 149.9, "quantidade": 1, "foto": "fotos/PL/PL004814990.jpg", "obs": ""}, {"codigo": "PL004914990", "categoria": "Pulseiras", "preco": 149.9, "quantidade": 1, "foto": "fotos/PL/PL004914990.jpg", "obs": ""}, {"codigo": "PL005014990", "categoria": "Pulseiras", "preco": 149.9, "quantidade": 1, "foto": "fotos/PL/PL005014990.jpg", "obs": ""}, {"codigo": "PL005114990", "categoria": "Pulseiras", "preco": 149.9, "quantidade": 1, "foto": "fotos/PL/PL005114990.jpg", "obs": ""}, {"codigo": "PL005214990", "categoria": "Pulseiras", "preco": 149.9, "quantidade": 1, "foto": "fotos/PL/PL005214990.jpg", "obs": ""}, {"codigo": "PL005314990", "categoria": "Pulseiras", "preco": 149.9, "quantidade": 1, "foto": "fotos/PL/PL005314990.jpg", "obs": ""}, {"codigo": "PL005419990", "categoria": "Pulseiras", "preco": 199.9, "quantidade": 1, "foto": "fotos/PL/PL005419990.jpg", "obs": ""}, {"codigo": "PL005519990", "categoria": "Pulseiras", "preco": 199.9, "quantidade": 1, "foto": "fotos/PL/PL005519990.jpg", "obs": ""}, {"codigo": "PL005619990", "categoria": "Pulseiras", "preco": 199.9, "quantidade": 1, "foto": "fotos/PL/PL005619990.jpg", "obs": ""}, {"codigo": "PL005724990", "categoria": "Pulseiras", "preco": 249.9, "quantidade": 1, "foto": "fotos/PL/PL005724990.jpg", "obs": "Origem: pasta BRACELETES, mesclada em Pulseiras por instrucao do usuario (faixa de preco propria)"}, {"codigo": "PL005824990", "categoria": "Pulseiras", "preco": 249.9, "quantidade": 1, "foto": "fotos/PL/PL005824990.jpg", "obs": "Origem: pasta BRACELETES, mesclada em Pulseiras por instrucao do usuario (faixa de preco propria)"}, {"codigo": "RV00019990", "categoria": "Riviera", "preco": 99.9, "quantidade": 1, "foto": "fotos/RV/RV00019990.jpg", "obs": ""}, {"codigo": "RV00029990", "categoria": "Riviera", "preco": 99.9, "quantidade": 1, "foto": "fotos/RV/RV00029990.jpg", "obs": ""}, {"codigo": "RV000311990", "categoria": "Riviera", "preco": 119.9, "quantidade": 1, "foto": "fotos/RV/RV000311990.jpg", "obs": ""}, {"codigo": "RV000411990", "categoria": "Riviera", "preco": 119.9, "quantidade": 1, "foto": "fotos/RV/RV000411990.jpg", "obs": ""}, {"codigo": "RV000514990", "categoria": "Riviera", "preco": 149.9, "quantidade": 1, "foto": "fotos/RV/RV000514990.jpg", "obs": ""}, {"codigo": "RV000614990", "categoria": "Riviera", "preco": 149.9, "quantidade": 1, "foto": "fotos/RV/RV000614990.jpg", "obs": ""}, {"codigo": "RV000714990", "categoria": "Riviera", "preco": 149.9, "quantidade": 1, "foto": "fotos/RV/RV000714990.jpg", "obs": ""}, {"codigo": "RV000814990", "categoria": "Riviera", "preco": 149.9, "quantidade": 1, "foto": "fotos/RV/RV000814990.jpg", "obs": ""}, {"codigo": "RV000914990", "categoria": "Riviera", "preco": 149.9, "quantidade": 1, "foto": "fotos/RV/RV000914990.jpg", "obs": ""}, {"codigo": "RV001014990", "categoria": "Riviera", "preco": 149.9, "quantidade": 1, "foto": "fotos/RV/RV001014990.jpg", "obs": ""}, {"codigo": "RV001114990", "categoria": "Riviera", "preco": 149.9, "quantidade": 1, "foto": "fotos/RV/RV001114990.jpg", "obs": ""}, {"codigo": "RV001214990", "categoria": "Riviera", "preco": 149.9, "quantidade": 1, "foto": "fotos/RV/RV001214990.jpg", "obs": ""}, {"codigo": "RV001314990", "categoria": "Riviera", "preco": 149.9, "quantidade": 1, "foto": "fotos/RV/RV001314990.jpg", "obs": ""}, {"codigo": "RV001414990", "categoria": "Riviera", "preco": 149.9, "quantidade": 1, "foto": "fotos/RV/RV001414990.jpg", "obs": ""}, {"codigo": "RV001514990", "categoria": "Riviera", "preco": 149.9, "quantidade": 1, "foto": "fotos/RV/RV001514990.jpg", "obs": ""}, {"codigo": "RV001614990", "categoria": "Riviera", "preco": 149.9, "quantidade": 1, "foto": "fotos/RV/RV001614990.jpg", "obs": ""}, {"codigo": "RV001719990", "categoria": "Riviera", "preco": 199.9, "quantidade": 1, "foto": "fotos/RV/RV001719990.jpg", "obs": ""}, {"codigo": "RV001819990", "categoria": "Riviera", "preco": 199.9, "quantidade": 1, "foto": "fotos/RV/RV001819990.jpg", "obs": ""}, {"codigo": "RV001919990", "categoria": "Riviera", "preco": 199.9, "quantidade": 1, "foto": "fotos/RV/RV001919990.jpg", "obs": ""}, {"codigo": "TR00015990", "categoria": "Tornozeleira", "preco": 59.9, "quantidade": 1, "foto": "fotos/TR/TR00015990.jpg", "obs": "Preco confirmado pelo usuario (R$59,90) apos levantamento inicial"}, {"codigo": "TR00025990", "categoria": "Tornozeleira", "preco": 59.9, "quantidade": 1, "foto": "fotos/TR/TR00025990.jpg", "obs": "Preco confirmado pelo usuario (R$59,90) apos levantamento inicial"}, {"codigo": "TR00035990", "categoria": "Tornozeleira", "preco": 59.9, "quantidade": 1, "foto": "fotos/TR/TR00035990.jpg", "obs": "Preco confirmado pelo usuario (R$59,90) apos levantamento inicial"}, {"codigo": "TR00045990", "categoria": "Tornozeleira", "preco": 59.9, "quantidade": 1, "foto": "fotos/TR/TR00045990.jpg", "obs": "Preco confirmado pelo usuario (R$59,90) apos levantamento inicial"}, {"codigo": "TR00055990", "categoria": "Tornozeleira", "preco": 59.9, "quantidade": 1, "foto": "fotos/TR/TR00055990.jpg", "obs": "Preco confirmado pelo usuario (R$59,90) apos levantamento inicial"}, {"codigo": "TR00065990", "categoria": "Tornozeleira", "preco": 59.9, "quantidade": 1, "foto": "fotos/TR/TR00065990.jpg", "obs": "Preco confirmado pelo usuario (R$59,90) apos levantamento inicial"}, {"codigo": "TR00075990", "categoria": "Tornozeleira", "preco": 59.9, "quantidade": 1, "foto": "fotos/TR/TR00075990.jpg", "obs": "Preco confirmado pelo usuario (R$59,90) apos levantamento inicial"}, {"codigo": "TR00085990", "categoria": "Tornozeleira", "preco": 59.9, "quantidade": 1, "foto": "fotos/TR/TR00085990.jpg", "obs": "Preco confirmado pelo usuario (R$59,90) apos levantamento inicial"}];
+
+const CATEGORIES = [
+  ["AN","Anéis"], ["BR","Brincos"], ["CH","Choker"], ["CJ","Conjuntos"],
+  ["CL","Colares"], ["LT","Letras"], ["PL","Pulseiras"], ["RV","Riviera"], ["TR","Tornozeleira"]
+];
+const CAT_LABEL = Object.fromEntries(CATEGORIES.map(c=>[c[1],c[1]]));
+const COMISSAO_PCT = 0.10;
+const FORM_VENDA_URL = "https://docs.google.com/forms/d/e/1FAIpQLSeIcd7gLlLpOGwH8De0vNsLvzKlQzXTJiVRH1w4_XqI9k5EMA/viewform";
+const PAINEL_URL = ""; // preencher quando a planilha publica estiver pronta
+
+function brl(v){ return "R$ " + v.toFixed(2).replace(".",","); }
+function codeCat(codigo){ return codigo.slice(0,2); }
+
+// ---------- public gallery ----------
+let activeCat = "Todos";
+let searchTerm = "";
+
+function buildChips(){
+  const wrap = document.getElementById("chips");
+  const counts = {};
+  CATALOG.forEach(it => counts[it.categoria] = (counts[it.categoria]||0)+1);
+  const all = [["Todos", CATALOG.length]].concat(CATEGORIES.map(c=>[c[1], counts[c[1]]||0]).filter(c=>c[1]>0));
+  wrap.innerHTML = all.map(([label,n]) =>
+    `<button class="chip${label===activeCat?' active':''}" data-cat="${label}">${label} <span class="n">${n}</span></button>`
+  ).join("");
+  wrap.querySelectorAll(".chip").forEach(btn=>{
+    btn.addEventListener("click", ()=>{ activeCat = btn.dataset.cat; buildChips(); renderGrid(); });
+  });
+}
+
+function matches(item){
+  const inCat = activeCat === "Todos" || item.categoria === activeCat;
+  const term = searchTerm.trim().toUpperCase();
+  const inSearch = !term || item.codigo.toUpperCase().includes(term);
+  return inCat && inSearch;
+}
+
+function renderGrid(){
+  const list = CATALOG.filter(matches);
+  document.getElementById("countLabel").textContent = `${list.length} de ${CATALOG.length} peças`;
+  const grid = document.getElementById("grid");
+  document.getElementById("emptyState").hidden = list.length>0;
+  grid.innerHTML = list.map(it => `
+    <button class="card" data-codigo="${it.codigo}">
+      <img src="${it.foto}" alt="${it.categoria} ${it.codigo}" loading="lazy">
+      <div class="info">
+        <span class="code mono">${it.codigo}</span>
+        <span class="price mono">${brl(it.preco)}</span>
+      </div>
+    </button>
+  `).join("");
+  grid.querySelectorAll(".card").forEach(card=>{
+    card.addEventListener("click", ()=> openModal(card.dataset.codigo));
+  });
+}
+
+function openModal(codigo){
+  const it = CATALOG.find(i=>i.codigo===codigo);
+  if(!it) return;
+  document.getElementById("modalImg").src = it.foto;
+  document.getElementById("modalImg").alt = it.categoria+" "+it.codigo;
+  document.getElementById("modalCode").textContent = it.codigo;
+  document.getElementById("modalCat").textContent = it.categoria;
+  document.getElementById("modalPrice").textContent = brl(it.preco);
+  document.getElementById("modalBg").hidden = false;
+}
+document.getElementById("modalClose").addEventListener("click", ()=> document.getElementById("modalBg").hidden = true);
+document.getElementById("modalBg").addEventListener("click", (e)=>{ if(e.target.id==="modalBg") document.getElementById("modalBg").hidden = true; });
+document.getElementById("modalCopy").addEventListener("click", async ()=>{
+  const code = document.getElementById("modalCode").textContent;
+  const btn = document.getElementById("modalCopy");
+  try{ await navigator.clipboard.writeText(code); btn.textContent = "copiado!"; }
+  catch(e){
+    const r = document.createRange(); r.selectNodeContents(document.getElementById("modalCode"));
+    const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    btn.textContent = "selecionado";
+  }
+  setTimeout(()=> btn.textContent = "copiar código", 1500);
+});
+
+document.getElementById("searchInput").addEventListener("input", (e)=>{ searchTerm = e.target.value; renderGrid(); });
+
+buildChips();
+renderGrid();
+
+/* Deep link: #CODIGO na URL (usado pelo QR code da etiqueta) abre a peça direto. */
+(function openFromDeepLink(){
+  const raw = (location.hash || "").replace("#", "").trim().toUpperCase();
+  if(raw && CATALOG.some(i=>i.codigo===raw)){
+    openModal(raw);
+  }
+})();
+window.addEventListener("hashchange", ()=>{
+  const raw = (location.hash || "").replace("#", "").trim().toUpperCase();
+  if(raw && CATALOG.some(i=>i.codigo===raw)) openModal(raw);
+});
+
+// ---------- staff drawer (versao estatica, sem claude.use) ----------
+const drawer = document.getElementById("drawer");
+const drawerBg = document.getElementById("drawerBg");
+const drawerContent = document.getElementById("drawerContent");
+
+function openDrawer(){
+  drawer.classList.add("open"); drawerBg.classList.add("open");
+  renderStaffPanel();
+}
+function closeDrawer(){ drawer.classList.remove("open"); drawerBg.classList.remove("open"); }
+document.getElementById("openStaff").addEventListener("click", openDrawer);
+document.getElementById("closeDrawer").addEventListener("click", closeDrawer);
+drawerBg.addEventListener("click", closeDrawer);
+
+function renderStaffPanel(){
+  drawerContent.innerHTML = `
+    <h2>Área da loja</h2>
+    <p style="color:var(--ink-soft);font-size:.88rem;line-height:1.5;margin:4px 0 18px;">
+      Registrar venda e ver patrimônio/comissão agora funcionam fora daqui, sem precisar de login nenhum nesta página.
+    </p>
+    <a class="staff-link-btn" href="${FORM_VENDA_URL}" target="_blank" rel="noopener">Registrar venda</a>
+    ${PAINEL_URL
+      ? `<a class="staff-link-btn secondary" href="${PAINEL_URL}" target="_blank" rel="noopener">Ver patrimônio e comissão</a>`
+      : `<div class="status-box">Painel de patrimônio/comissão ainda não disponível.</div>`}
+  `;
+}
+</script>
+</body>
+</html>
